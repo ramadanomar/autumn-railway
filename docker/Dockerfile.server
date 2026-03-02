@@ -14,6 +14,11 @@ RUN apt-get update \
 RUN git clone --depth 1 --branch ${AUTUMN_VERSION} \
     https://github.com/${AUTUMN_REPO}.git .
 
+RUN if [ ! -f /app/shared/utils/invoices/invoiceLineItems/logs/index.ts ]; then \
+      mkdir -p /app/shared/utils/invoices/invoiceLineItems/logs \
+      && printf 'export const logInvoiceLineItems = async () => {};\n' > /app/shared/utils/invoices/invoiceLineItems/logs/index.ts; \
+    fi
+
 # Install all deps (including devDeps — needed for drizzle-kit schema push)
 RUN bun install --ignore-scripts
 
