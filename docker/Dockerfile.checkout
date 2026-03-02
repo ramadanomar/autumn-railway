@@ -20,7 +20,7 @@ RUN bun install --ignore-scripts
 ENV VITE_API_URL=__VITE_API_URL__
 
 WORKDIR /app/apps/checkout
-RUN bun run build
+RUN bunx vite build
 
 # ---------------------------------------------------------------------------
 # Stage 2: Lightweight static file server
