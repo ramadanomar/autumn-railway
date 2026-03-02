@@ -15,6 +15,14 @@ on:
         description: "Docker tag to publish (use slug-safe value, e.g. main or test-cors)"
         required: false
         default: "main"
+      server_autumn_repo:
+        description: "Optional override repo for backend image only"
+        required: false
+        default: ""
+      server_autumn_version:
+        description: "Optional override branch/tag for backend image only"
+        required: false
+        default: ""
 
 env:
   REGISTRY: ghcr.io
@@ -49,8 +57,8 @@ jobs:
           push: true
           platforms: linux/amd64
           build-args: |
-            AUTUMN_REPO=${{ inputs.autumn_repo || 'useautumn/autumn' }}
-            AUTUMN_VERSION=${{ inputs.autumn_version || 'main' }}
+            AUTUMN_REPO=${{ inputs.server_autumn_repo || inputs.autumn_repo || 'useautumn/autumn' }}
+            AUTUMN_VERSION=${{ inputs.server_autumn_version || inputs.autumn_version || 'main' }}
           tags: |
             ${{ env.SERVER_IMAGE }}:latest
             ${{ env.SERVER_IMAGE }}:${{ inputs.image_tag || 'main' }}
