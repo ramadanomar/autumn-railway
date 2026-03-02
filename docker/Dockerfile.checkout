@@ -3,6 +3,7 @@
 # ---------------------------------------------------------------------------
 FROM oven/bun:1.3.2 AS build
 
+ARG AUTUMN_REPO=useautumn/autumn
 ARG AUTUMN_VERSION=main
 
 WORKDIR /app
@@ -12,7 +13,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git clone --depth 1 --branch ${AUTUMN_VERSION} \
-    https://github.com/useautumn/autumn.git .
+    https://github.com/${AUTUMN_REPO}.git .
 
 RUN bun install --ignore-scripts
 

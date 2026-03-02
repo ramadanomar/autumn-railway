@@ -3,8 +3,16 @@ name: Build and Push Docker Images
 on:
   workflow_dispatch:
     inputs:
+      autumn_repo:
+        description: "Autumn repository in owner/name format (e.g. useautumn/autumn)"
+        required: false
+        default: "useautumn/autumn"
       autumn_version:
         description: "Autumn version — git tag (e.g. v1.2.3) or branch (e.g. main)"
+        required: false
+        default: "main"
+      image_tag:
+        description: "Docker tag to publish (use slug-safe value, e.g. main or test-cors)"
         required: false
         default: "main"
 
@@ -41,10 +49,11 @@ jobs:
           push: true
           platforms: linux/amd64
           build-args: |
+            AUTUMN_REPO=${{ inputs.autumn_repo || 'useautumn/autumn' }}
             AUTUMN_VERSION=${{ inputs.autumn_version || 'main' }}
           tags: |
             ${{ env.SERVER_IMAGE }}:latest
-            ${{ env.SERVER_IMAGE }}:${{ inputs.autumn_version || 'main' }}
+            ${{ env.SERVER_IMAGE }}:${{ inputs.image_tag || 'main' }}
           cache-from: type=registry,ref=${{ env.SERVER_IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.SERVER_IMAGE }}:buildcache,mode=max
 
@@ -74,10 +83,11 @@ jobs:
           push: true
           platforms: linux/amd64
           build-args: |
+            AUTUMN_REPO=${{ inputs.autumn_repo || 'useautumn/autumn' }}
             AUTUMN_VERSION=${{ inputs.autumn_version || 'main' }}
           tags: |
             ${{ env.DASHBOARD_IMAGE }}:latest
-            ${{ env.DASHBOARD_IMAGE }}:${{ inputs.autumn_version || 'main' }}
+            ${{ env.DASHBOARD_IMAGE }}:${{ inputs.image_tag || 'main' }}
           cache-from: type=registry,ref=${{ env.DASHBOARD_IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.DASHBOARD_IMAGE }}:buildcache,mode=max
 
@@ -107,9 +117,10 @@ jobs:
           push: true
           platforms: linux/amd64
           build-args: |
+            AUTUMN_REPO=${{ inputs.autumn_repo || 'useautumn/autumn' }}
             AUTUMN_VERSION=${{ inputs.autumn_version || 'main' }}
           tags: |
             ${{ env.CHECKOUT_IMAGE }}:latest
-            ${{ env.CHECKOUT_IMAGE }}:${{ inputs.autumn_version || 'main' }}
+            ${{ env.CHECKOUT_IMAGE }}:${{ inputs.image_tag || 'main' }}
           cache-from: type=registry,ref=${{ env.CHECKOUT_IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.CHECKOUT_IMAGE }}:buildcache,mode=max
