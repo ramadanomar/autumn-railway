@@ -1,0 +1,50 @@
+# ---------------------------------------------------------------------------
+# Stage 1: Build the Vite dashboard with placeholder env vars
+# ---------------------------------------------------------------------------
+FROM oven/bun:1.3.2 AS build
+
+ARG AUTUMN_VERSION=main
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 --branch ${AUTUMN_VERSION} \
+    https://github.com/useautumn/autumn.git .
+
+RUN bun install --ignore-scripts
+
+# Vite inlines import.meta.env.VITE_* as literal strings at build time.
+# We set them to recognisable placeholders here; the entrypoint script
+# swaps them for real values at container startup via sed.
+ENV VITE_BACKEND_URL=__VITE_BACKEND_URL__
+ENV VITE_FRONTEND_URL=__VITE_FRONTEND_URL__
+ENV VITE_SUPABASE_URL=__VITE_SUPABASE_URL__
+ENV VITE_PUBLIC_POSTHOG_KEY=__VITE_PUBLIC_POSTHOG_KEY__
+ENV VITE_PUBLIC_POSTHOG_HOST=__VITE_PUBLIC_POSTHOG_HOST__
+ENV VITE_SENTRY_DSN=__VITE_SENTRY_DSN__
+
+WORKDIR /app/vite
+RUN bun run build
+
+# ---------------------------------------------------------------------------
+# Stage 2: Lightweight image that serves the static build output
+# ---------------------------------------------------------------------------
+FROM node:20-alpine
+
+RUN npm install -g serve@latest
+
+WORKDIR /app
+
+COPY --from=build /app/vite/dist ./dist
+COPY --from=build /app/LICENSE  ./LICENSE
+
+# Entrypoint script lives in the autumn-railway repo (build context)
+COPY scripts/dashboard-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 3000
+
+ENTRYPOINT ["/entrypoint.sh"]

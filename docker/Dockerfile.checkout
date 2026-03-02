@@ -1,0 +1,42 @@
+# ---------------------------------------------------------------------------
+# Stage 1: Build the checkout app with placeholder env vars
+# ---------------------------------------------------------------------------
+FROM oven/bun:1.3.2 AS build
+
+ARG AUTUMN_VERSION=main
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 --branch ${AUTUMN_VERSION} \
+    https://github.com/useautumn/autumn.git .
+
+RUN bun install --ignore-scripts
+
+# Single VITE var used by the checkout oRPC client
+ENV VITE_API_URL=__VITE_API_URL__
+
+WORKDIR /app/apps/checkout
+RUN bun run build
+
+# ---------------------------------------------------------------------------
+# Stage 2: Lightweight static file server
+# ---------------------------------------------------------------------------
+FROM node:20-alpine
+
+RUN npm install -g serve@latest
+
+WORKDIR /app
+
+COPY --from=build /app/apps/checkout/dist ./dist
+COPY --from=build /app/LICENSE             ./LICENSE
+
+COPY scripts/checkout-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 3001
+
+ENTRYPOINT ["/entrypoint.sh"]
